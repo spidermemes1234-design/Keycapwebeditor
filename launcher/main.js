@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const { spawn } = require('child_process');
 
 const OWNER = 'spidermemes1234-design';
-const REPO = 'keycapwebeditor';
+const REPO = 'Keycapwebeditor';
 const BRANCH = 'main';
 
 const BUNDLED = path.join(__dirname, 'bundled-app');          // shipped with the exe (fallback)
@@ -37,8 +37,13 @@ async function fetchWithTimeout(url, ms = 8000) {
 async function checkForUpdate(current) {
   status('Checking for updates…');
   // Pin to the latest commit so we never get a half-cached mix of files.
-  const commit = await (await fetchWithTimeout(`https://api.github.com/repos/${OWNER}/${REPO}/commits/${BRANCH}`)).json();
-  const raw = `https://raw.githubusercontent.com/${OWNER}/${REPO}/${commit.sha}/app/`;
+  // If the GitHub API is unavailable (e.g. rate limited), fall back to the branch directly.
+  let ref = BRANCH;
+  try {
+    const commit = await (await fetchWithTimeout(`https://api.github.com/repos/${OWNER}/${REPO}/commits/${BRANCH}`, 5000)).json();
+    if (commit && commit.sha) ref = commit.sha;
+  } catch {}
+  const raw = `https://raw.githubusercontent.com/${OWNER}/${REPO}/${ref}/app/`;
   const manifest = await (await fetchWithTimeout(raw + 'version.json')).json();
   if (!newer(manifest.version, current.version)) return null;
 
