@@ -33,6 +33,7 @@ module.exports.start = function start(ctx) {
   app.use('/assets', express.static(ASSETS));
   // Preview pages use root-relative links, so serve the site stylesheet at the root too.
   app.get('/styles.css', (req, res) => res.sendFile(path.join(__dirname, 'styles.css')));
+  app.get('/site.js', (req, res) => res.sendFile(path.join(__dirname, 'site.js')));
 
   app.get('/api/version', (req, res) => res.json({ version, dataDir }));
 
@@ -108,10 +109,12 @@ module.exports.start = function start(ctx) {
   });
 
   app.post('/api/publish', (req, res) => {
-    try { backup('publish'); build(SITE, DIST); } catch (e) { return res.status(500).end('Build failed: ' + e); }
+    const draft = req.query.draft === '1';
+    try { if (!draft) backup('publish'); build(SITE, DIST); } catch (e) { return res.status(500).end('Build failed: ' + e); }
     res.write('Building site… done\nUploading to Cloudflare…\n');
-    streamWrangler(['pages', 'deploy', DIST, '--project-name', PROJECT, '--branch', 'main', '--commit-dirty=true'], res,
-      '\n✅ Published! Live at https://keycapstudios.com\n');
+    streamWrangler(['pages', 'deploy', DIST, '--project-name', PROJECT, '--branch', draft ? 'preview' : 'main', '--commit-dirty=true'], res,
+      draft ? '\n✅ Test version published! Open the https://…pages.dev link above to check it. The real site has not changed.\n'
+            : '\n✅ Published! Live at https://keycapstudios.com\n');
   });
 
   return new Promise(resolve => {

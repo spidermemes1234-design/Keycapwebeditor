@@ -1,7 +1,7 @@
 // Block library: what can be added to a page, and the fields each block has.
 const BTN_FIELDS = [
   { key: 'text', label: 'Text' }, { key: 'link', label: 'Link', type: 'link' },
-  { key: 'style', label: 'Style', type: 'select', options: [['primary', 'Filled'], ['ghost', 'Outline']] },
+  { key: 'style', label: 'Style', type: 'select', options: [['primary', 'Filled'], ['ghost', 'Outline'], ['link', 'Text link']] },
 ];
 const TAG_COLORS = [['', 'Grey'], ['free', 'Green'], ['pro', 'Accent']];
 
@@ -54,12 +54,12 @@ window.BLOCKS = {
   features: { name: 'Feature list', icon: '✅', group: 'Content', desc: 'Short points with titles',
     fields: [{ key: 'title', label: 'Title' }, { key: 'subtitle', label: 'Subtitle', type: 'textarea' },
       { key: 'columns', label: 'Columns', type: 'select', options: [[2, '2'], [3, '3'], [4, '4']] },
-      { key: 'items', label: 'Features', type: 'list', item: 'title', fields: [{ key: 'title', label: 'Title' }, { key: 'text', label: 'Text', type: 'textarea' }], blank: { title: 'Feature', text: '' } }],
+      { key: 'items', label: 'Features', type: 'list', item: 'title', fields: [{ key: 'icon', label: 'Emoji icon (optional)' }, { key: 'title', label: 'Title' }, { key: 'text', label: 'Text', type: 'textarea' }], blank: { icon: '', title: 'Feature', text: '' } }],
     make: () => ({ props: { title: 'Why it rocks', subtitle: '', columns: 3, items: [{ title: 'Fast', text: 'Text' }, { title: 'Simple', text: 'Text' }, { title: 'Yours', text: 'Text' }] }, style: { padding: 'l' } }) },
   pricing: { name: 'Pricing', icon: '💲', group: 'Content', desc: 'Plans side by side',
     fields: [{ key: 'title', label: 'Title' }, { key: 'subtitle', label: 'Subtitle', type: 'textarea' },
       { key: 'plans', label: 'Plans', type: 'list', item: 'name', fields: [
-        { key: 'name', label: 'Plan name' }, { key: 'price', label: 'Price' }, { key: 'features', label: 'Features (one per line)', type: 'textarea' },
+        { key: 'name', label: 'Plan name' }, { key: 'price', label: 'Price' }, { key: 'period', label: 'After price (e.g. /month)' }, { key: 'badge', label: 'Badge when highlighted (e.g. Popular)' }, { key: 'features', label: 'Features (one per line)', type: 'textarea' },
         { key: 'buttonText', label: 'Button text' }, { key: 'buttonLink', label: 'Button link', type: 'link' }, { key: 'featured', label: 'Highlight this plan', type: 'toggle' }],
         blank: { name: 'Plan', price: '$0', features: '', buttonText: 'Choose', buttonLink: '#', featured: false } }],
     make: () => ({ props: { title: 'Pricing', subtitle: '', plans: [
@@ -67,7 +67,7 @@ window.BLOCKS = {
       { name: 'Pro', price: '$9.99', features: 'Everything in Free\nAI Edit', buttonText: 'Upgrade', buttonLink: '#', featured: true }] }, style: { padding: 'l', align: 'center' } }) },
   faq: { name: 'FAQ', icon: '❓', group: 'Content', desc: 'Questions that expand on click',
     fields: [{ key: 'title', label: 'Title' }, { key: 'items', label: 'Questions', type: 'list', item: 'q', fields: [{ key: 'q', label: 'Question' }, { key: 'a', label: 'Answer', type: 'rich' }], blank: { q: 'Question?', a: '<p>Answer.</p>' } }],
-    make: () => ({ props: { title: 'FAQ', items: [{ q: 'Is it free?', a: '<p>The base editor is free.</p>' }] }, style: { padding: 'l', width: 'narrow' } }) },
+    make: () => ({ props: { openFirst: false, title: 'FAQ', items: [{ q: 'Is it free?', a: '<p>The base editor is free.</p>' }] }, style: { padding: 'l', width: 'narrow' } }) },
   quote: { name: 'Quote', icon: '💬', group: 'Text', desc: 'Testimonial or big quote',
     fields: [{ key: 'text', label: 'Quote', type: 'textarea' }, { key: 'author', label: 'Who said it' }],
     make: () => ({ props: { text: 'This changed how I edit.', author: 'A happy creator' }, style: { padding: 'l' } }) },
@@ -86,16 +86,135 @@ window.BLOCKS = {
 };
 
 window.STYLE_FIELDS = [
-  { key: 'bg', label: 'Background', type: 'select', options: [['', 'None'], ['alt', 'Panel'], ['card', 'Card'], ['glow', 'Accent glow'], ['accent', 'Accent colour'], ['custom', 'Custom colour'], ['image', 'Image']] },
+  { group: 'Background' },
+  { key: 'bg', label: 'Background', type: 'select', options: [['', 'None'], ['alt', 'Panel'], ['card', 'Card'], ['glow', 'Accent glow'], ['accent', 'Accent colour'], ['gradient', 'Gradient'], ['custom', 'Custom colour'], ['image', 'Image']] },
   { key: 'bgColor', label: 'Background colour', type: 'color', when: s => s.bg === 'custom' },
+  { key: 'gradFrom', label: 'Gradient from', type: 'color', when: s => s.bg === 'gradient' },
+  { key: 'gradTo', label: 'Gradient to', type: 'color', when: s => s.bg === 'gradient' },
+  { key: 'gradAngle', label: 'Gradient angle (0–360)', type: 'number', when: s => s.bg === 'gradient' },
   { key: 'bgImage', label: 'Background image', type: 'image', when: s => s.bg === 'image' },
   { key: 'overlay', label: 'Image darkness (0–90)', type: 'number', when: s => s.bg === 'image' },
+  { key: 'parallax', label: 'Parallax (image stays still while scrolling)', type: 'toggle', when: s => s.bg === 'image' },
   { key: 'textColor', label: 'Text colour (optional)', type: 'color', clearable: true },
+  { group: 'Layout' },
   { key: 'padding', label: 'Spacing above/below', type: 'select', options: [['none', 'None'], ['s', 'Small'], ['m', 'Medium'], ['l', 'Large'], ['xl', 'Extra large']] },
   { key: 'width', label: 'Content width', type: 'select', options: [['narrow', 'Narrow'], ['normal', 'Normal'], ['wide', 'Wide'], ['full', 'Edge to edge']] },
   { key: 'align', label: 'Alignment', type: 'select', options: [['', 'Left'], ['center', 'Centre'], ['right', 'Right']] },
-  { key: 'anchor', label: 'Anchor name (link to it with #name)' },
+  { key: 'minHeight', label: 'Minimum height (% of screen, e.g. 100 = full screen)', type: 'number' },
+  { group: 'Motion' },
+  { key: 'animation', label: 'Animate when scrolled into view', type: 'select', options: [['', 'None'], ['fade', 'Fade in'], ['fade-up', 'Fade up'], ['fade-down', 'Fade down'], ['slide-left', 'Slide from right'], ['slide-right', 'Slide from left'], ['zoom', 'Zoom in'], ['blur', 'Blur in']] },
+  { key: 'delay', label: 'Animation delay (ms)', type: 'number', when: s => !!s.animation },
+  { group: 'Visibility' },
   { key: 'hideMobile', label: 'Hide on phones', type: 'toggle' },
+  { key: 'hideDesktop', label: 'Hide on computers', type: 'toggle' },
+  { group: 'Advanced' },
+  { key: 'anchor', label: 'Anchor name (link to it with #name)' },
+  { key: 'className', label: 'Extra CSS classes' },
+  { key: 'css', label: 'Custom CSS for this block (use & for the block, e.g. & h2 { color: red })', type: 'code' },
 ];
 
-window.FONTS = ['Inter', 'Poppins', 'Montserrat', 'DM Sans', 'Space Grotesk', 'Rajdhani', 'Orbitron', 'Oswald'];
+window.FONTS = ['Inter', 'Poppins', 'Montserrat', 'DM Sans', 'Plus Jakarta Sans', 'Outfit', 'Sora', 'Space Grotesk', 'Exo', 'Chakra Petch', 'Rajdhani', 'Orbitron', 'Oswald', 'Bebas Neue', 'Press Start 2P', 'JetBrains Mono'];
+
+// ---- v3 blocks ----
+const SOCIALS = [['youtube', 'YouTube'], ['twitch', 'Twitch'], ['tiktok', 'TikTok'], ['discord', 'Discord'], ['x', 'X / Twitter'], ['instagram', 'Instagram'], ['steam', 'Steam'], ['github', 'GitHub'], ['email', 'Email']];
+window.SOCIALS = SOCIALS;
+BLOCKS.faq.fields.splice(1, 0, { key: 'openFirst', label: 'First question open', type: 'toggle' });
+Object.assign(BLOCKS, {
+  testimonials: { name: 'Testimonials', icon: '⭐', group: 'Content', desc: 'Reviews with stars, grid or slider',
+    fields: [{ key: 'title', label: 'Title' }, { key: 'subtitle', label: 'Subtitle', type: 'textarea' },
+      { key: 'layout', label: 'Layout', type: 'select', options: [['grid', 'Grid'], ['slider', 'Swipe slider']] },
+      { key: 'columns', label: 'Columns (grid)', type: 'select', options: [[2, '2'], [3, '3'], [4, '4']] },
+      { key: 'items', label: 'Testimonials', type: 'list', item: 'name', fields: [{ key: 'text', label: 'Quote', type: 'textarea' }, { key: 'name', label: 'Name' }, { key: 'role', label: 'Role / channel' }, { key: 'avatar', label: 'Photo', type: 'image' }, { key: 'rating', label: 'Stars (0–5)', type: 'number' }], blank: { text: 'Great!', name: 'Name', role: '', avatar: '', rating: 5 } }],
+    make: () => ({ props: { title: 'Creators love it', subtitle: '', layout: 'grid', columns: 3, items: [1, 2, 3].map(i => ({ text: 'ForgeCut cut my editing time in half.', name: 'Creator ' + i, role: 'YouTuber', avatar: '', rating: 5 })) }, style: { padding: 'l' } }) },
+  stats: { name: 'Stats / counters', icon: '🔢', group: 'Content', desc: 'Big numbers that count up',
+    fields: [{ key: 'title', label: 'Title' }, { key: 'items', label: 'Stats', type: 'list', item: 'label', max: 6, fields: [{ key: 'value', label: 'Number (e.g. 10,000+ or 4.9)' }, { key: 'label', label: 'Label' }], blank: { value: '100+', label: 'Label' } }],
+    make: () => ({ props: { title: '', items: [{ value: '6', label: 'Apps in one suite' }, { value: '10,000+', label: 'Hours saved' }, { value: '4.9', label: 'Average rating' }, { value: '24/7', label: 'Auto-updates' }] }, style: { padding: 'l', align: 'center' } }) },
+  logos: { name: 'Logo strip', icon: '🏷️', group: 'Media', desc: 'Partner / platform logos, optional scrolling',
+    fields: [{ key: 'title', label: 'Small title above' }, { key: 'scroll', label: 'Scroll continuously', type: 'toggle' }, { key: 'height', label: 'Logo height (px)', type: 'number' },
+      { key: 'items', label: 'Logos', type: 'list', item: 'name', fields: [{ key: 'src', label: 'Logo', type: 'image' }, { key: 'name', label: 'Name' }, { key: 'link', label: 'Link', type: 'link' }], blank: { src: '', name: 'Logo', link: '' } }],
+    make: () => ({ props: { title: 'Works with', scroll: false, height: 40, items: [] }, style: { padding: 'm' } }) },
+  team: { name: 'Team', icon: '👥', group: 'Content', desc: 'People with photos and roles',
+    fields: [{ key: 'title', label: 'Title' }, { key: 'subtitle', label: 'Subtitle', type: 'textarea' }, { key: 'columns', label: 'Columns', type: 'select', options: [[2, '2'], [3, '3'], [4, '4']] },
+      { key: 'items', label: 'People', type: 'list', item: 'name', fields: [{ key: 'name', label: 'Name' }, { key: 'role', label: 'Role' }, { key: 'photo', label: 'Photo', type: 'image' }, { key: 'bio', label: 'Bio', type: 'textarea' }, { key: 'link', label: 'Link', type: 'link' }, { key: 'linkText', label: 'Link text' }], blank: { name: 'Name', role: 'Role', photo: '', bio: '', link: '', linkText: 'Profile' } }],
+    make: () => ({ props: { title: 'The team', subtitle: '', columns: 3, items: [{ name: 'Spoeder', role: 'Founder', photo: '', bio: '', link: '', linkText: 'YouTube' }] }, style: { padding: 'l', align: 'center' } }) },
+  timeline: { name: 'Timeline / roadmap', icon: '🗺️', group: 'Content', desc: 'Steps or roadmap with status',
+    fields: [{ key: 'title', label: 'Title' }, { key: 'subtitle', label: 'Subtitle', type: 'textarea' },
+      { key: 'items', label: 'Steps', type: 'list', item: 'title', fields: [{ key: 'when', label: 'When (e.g. Q1 2027)' }, { key: 'title', label: 'Title' }, { key: 'text', label: 'Text', type: 'textarea' }, { key: 'status', label: 'Status', type: 'select', options: [['', 'Planned'], ['now', 'In progress'], ['done', 'Done']] }], blank: { when: '', title: 'Step', text: '', status: '' } }],
+    make: () => ({ props: { title: 'Roadmap', subtitle: '', items: [{ when: 'Now', title: 'ForgeCut beta', text: 'Core editor.', status: 'now' }, { when: 'Next', title: 'ForgeCast', text: 'Multistreaming.', status: '' }] }, style: { padding: 'l' } }) },
+  tabs: { name: 'Tabs', icon: '🗂', group: 'Content', desc: 'Switchable panels with text and image',
+    fields: [{ key: 'title', label: 'Title' }, { key: 'subtitle', label: 'Subtitle', type: 'textarea' },
+      { key: 'items', label: 'Tabs', type: 'list', item: 'label', fields: [{ key: 'label', label: 'Tab name' }, { key: 'html', label: 'Content', type: 'rich' }, { key: 'image', label: 'Image', type: 'image' }], blank: { label: 'Tab', html: '<p>Content</p>', image: '' } }],
+    make: () => ({ props: { title: '', subtitle: '', items: [{ label: 'Edit', html: '<h3>Edit</h3><p>Fast timeline.</p>', image: '' }, { label: 'Stream', html: '<h3>Stream</h3><p>Go live everywhere.</p>', image: '' }] }, style: { padding: 'l' } }) },
+  countdown: { name: 'Countdown', icon: '⏳', group: 'Content', desc: 'Timer to a launch date',
+    fields: [{ key: 'title', label: 'Title' }, { key: 'date', label: 'Date & time (YYYY-MM-DDTHH:MM, e.g. 2027-03-01T18:00)' }, { key: 'doneText', label: 'Text when finished' },
+      { key: 'buttons', label: 'Buttons', type: 'list', item: 'text', fields: BTN_FIELDS, blank: { text: 'Wishlist', link: '#', style: 'primary' } }],
+    make: () => ({ props: { title: 'Launching in', date: new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 16), doneText: "We're live!", buttons: [] }, style: { padding: 'l', align: 'center' } }) },
+  form: { name: 'Contact form', icon: '✉️', group: 'Forms', desc: 'Any fields, sends to your email',
+    fields: [{ key: 'title', label: 'Title' }, { key: 'subtitle', label: 'Subtitle', type: 'textarea' },
+      { key: 'endpoint', label: 'Form service URL (Formspree / Web3Forms). Leave empty to open the visitor\'s email app.', type: 'text' },
+      { key: 'email', label: 'Your email (used when no service URL)' }, { key: 'button', label: 'Button text' }, { key: 'successText', label: 'Message after sending' },
+      { key: 'fields', label: 'Fields', type: 'list', item: 'label', fields: [{ key: 'label', label: 'Label' }, { key: 'type', label: 'Type', type: 'select', options: [['text', 'Text'], ['email', 'Email'], ['tel', 'Phone'], ['textarea', 'Long text'], ['select', 'Dropdown'], ['checkbox', 'Checkbox']] }, { key: 'placeholder', label: 'Placeholder' }, { key: 'options', label: 'Dropdown options (one per line)', type: 'textarea' }, { key: 'required', label: 'Required', type: 'toggle' }, { key: 'half', label: 'Half width', type: 'toggle' }], blank: { label: 'Field', type: 'text', placeholder: '', options: '', required: false, half: false } }],
+    make: () => ({ props: { title: 'Get in touch', subtitle: '', endpoint: '', email: 'hello@keycapstudios.com', button: 'Send message', successText: 'Thanks! We got your message.', fields: [
+      { label: 'Name', type: 'text', placeholder: '', required: true, half: true }, { label: 'Email', type: 'email', placeholder: '', required: true, half: true },
+      { label: 'Message', type: 'textarea', placeholder: '', required: true, half: false }] }, style: { padding: 'l', width: 'narrow' } }) },
+  newsletter: { name: 'Newsletter signup', icon: '📬', group: 'Forms', desc: 'Email capture box',
+    fields: [{ key: 'title', label: 'Title' }, { key: 'text', label: 'Text', type: 'textarea' }, { key: 'placeholder', label: 'Placeholder' }, { key: 'button', label: 'Button text' },
+      { key: 'endpoint', label: 'Form service URL (Formspree / Mailchimp / Web3Forms)' }, { key: 'email', label: 'Your email (fallback)' }, { key: 'successText', label: 'Message after signup' }],
+    make: () => ({ props: { title: 'Get launch updates', text: 'No spam. Just big news.', placeholder: 'you@email.com', button: 'Notify me', endpoint: '', email: 'hello@keycapstudios.com', successText: "You're on the list!" }, style: { padding: 'l' } }) },
+  social: { name: 'Social links', icon: '🔗', group: 'Text', desc: 'YouTube, Twitch, Discord… icons',
+    fields: [{ key: 'title', label: 'Title' }, { key: 'showLabels', label: 'Show names', type: 'toggle' }, { key: 'size', label: 'Size', type: 'select', options: [['sm', 'Small'], ['', 'Medium'], ['lg', 'Large']] },
+      { key: 'items', label: 'Links', type: 'list', item: 'network', fields: [{ key: 'network', label: 'Network', type: 'select', options: SOCIALS }, { key: 'link', label: 'Link', type: 'link' }], blank: { network: 'youtube', link: '' } }],
+    make: () => ({ props: { title: '', showLabels: true, size: '', items: [{ network: 'youtube', link: 'https://youtube.com/@IamSpoeder' }, { network: 'twitch', link: 'https://twitch.tv/IamSpoeder' }] }, style: { padding: 'm', align: 'center' } }) },
+  iconlist: { name: 'Checklist', icon: '☑️', group: 'Text', desc: 'List with icons or ticks',
+    fields: [{ key: 'title', label: 'Title' }, { key: 'subtitle', label: 'Subtitle', type: 'textarea' }, { key: 'columns', label: 'Columns', type: 'select', options: [[1, '1'], [2, '2'], [3, '3']] },
+      { key: 'items', label: 'Items', type: 'list', item: 'text', fields: [{ key: 'icon', label: 'Icon (emoji or ✓)' }, { key: 'text', label: 'Text' }], blank: { icon: '✓', text: 'Item' } }],
+    make: () => ({ props: { title: '', subtitle: '', columns: 2, items: ['No subscription', 'Free updates', 'Works offline', 'Made for creators'].map(t => ({ icon: '✓', text: t })) }, style: { padding: 'm' } }) },
+  embed: { name: 'Embed (Steam, Twitch…)', icon: '🧩', group: 'Media', desc: 'Steam widget, Twitch, Spotify, TikTok, Vimeo',
+    fields: [{ key: 'url', label: 'Paste a link (Steam store page, Twitch channel/video, Spotify, TikTok video, Vimeo, YouTube)' }],
+    make: () => ({ props: { url: '' }, style: { padding: 'm', width: 'narrow' } }) },
+  map: { name: 'Map', icon: '📍', group: 'Media', desc: 'Google map of an address',
+    fields: [{ key: 'title', label: 'Title' }, { key: 'address', label: 'Address or place' }, { key: 'zoom', label: 'Zoom (1–20)', type: 'number' }, { key: 'tall', label: 'Taller map', type: 'toggle' }],
+    make: () => ({ props: { title: '', address: 'Kroonstad, South Africa', zoom: 12, tall: false }, style: { padding: 'm' } }) },
+  posts: { name: 'Latest posts', icon: '📰', group: 'Content', desc: 'Your newest blog/news posts',
+    fields: [{ key: 'title', label: 'Title' }, { key: 'subtitle', label: 'Subtitle', type: 'textarea' }, { key: 'count', label: 'How many', type: 'number' }, { key: 'columns', label: 'Columns', type: 'select', options: [[1, '1'], [2, '2'], [3, '3']] }, { key: 'images', label: 'Show cover images', type: 'toggle' }, { key: 'allLink', label: '"See all" button text (empty = hide)' }],
+    make: () => ({ props: { title: 'Latest news', subtitle: '', count: 3, columns: 3, images: true, allLink: 'All news' }, style: { padding: 'l' } }) },
+});
+BLOCKS.divider.fields = [];
+BLOCKS.video.desc = 'Embed a YouTube video';
+BLOCKS.gallery.fields.push({ key: 'lightbox', label: 'Click to enlarge', type: 'toggle' });
+BLOCKS.columns.fields.unshift({ key: 'valign', label: 'Vertical alignment', type: 'select', options: [['top', 'Top'], ['center', 'Middle'], ['bottom', 'Bottom']] });
+BLOCKS.gallery.make = () => ({ props: { columns: 3, lightbox: true, images: [] }, style: { padding: 'm' } });
+
+// ---- page templates ----
+window.TEMPLATES = {
+  blank: { name: 'Blank', icon: '⬜', blocks: n => [{ type: 'heading', props: { text: n, level: 1, subtitle: '' }, style: { padding: 'l' } }] },
+  landing: { name: 'Landing page', icon: '🚀', blocks: n => [
+    { type: 'hero', props: { eyebrow: 'Introducing', title: n, highlight: 'built for creators.', text: 'One sentence that sells it.', buttons: [{ text: 'Get it', link: '#cta', style: 'primary' }, { text: 'Learn more', link: '#features', style: 'ghost' }], image: '' }, style: { padding: 'xl', align: 'center', bg: 'glow', animation: 'fade-up' } },
+    { type: 'logos', props: { title: 'Works with', scroll: true, height: 36, items: [] }, style: { padding: 's' } },
+    { type: 'imagetext', props: { image: '', imageRight: false, title: 'The main feature', html: '<p>Explain the biggest benefit.</p>', buttons: [] }, style: { padding: 'l', animation: 'fade-up', anchor: 'features' } },
+    { type: 'imagetext', props: { image: '', imageRight: true, title: 'Another feature', html: '<p>And another.</p>', buttons: [] }, style: { padding: 'l', animation: 'fade-up' } },
+    { type: 'stats', props: { title: '', items: [{ value: '10x', label: 'Faster' }, { value: '6', label: 'Apps' }, { value: '100%', label: 'Yours' }] }, style: { padding: 'l', align: 'center', bg: 'alt' } },
+    { type: 'testimonials', props: { title: 'What creators say', subtitle: '', layout: 'grid', columns: 3, items: [1, 2, 3].map(i => ({ text: 'Love it.', name: 'Creator ' + i, role: '', avatar: '', rating: 5 })) }, style: { padding: 'l', animation: 'fade-up' } },
+    { type: 'faq', props: { title: 'FAQ', openFirst: true, items: [{ q: 'How much is it?', a: '<p>Answer.</p>' }] }, style: { padding: 'l', width: 'narrow' } },
+    { type: 'cta', props: { title: 'Ready?', text: '', buttons: [{ text: 'Wishlist on Steam', link: '#', style: 'primary' }] }, style: { padding: 'l', anchor: 'cta' } }] },
+  app: { name: 'App / product page', icon: '🎬', blocks: n => [
+    { type: 'hero', props: { eyebrow: 'The Forge', title: n, highlight: '', text: 'What this app does in one line.', buttons: [{ text: 'Get ' + n, link: '#', style: 'primary' }], image: '' }, style: { padding: 'xl', align: 'center', bg: 'glow' } },
+    { type: 'video', props: { title: '', url: '' }, style: { padding: 'm', width: 'normal' } },
+    { type: 'features', props: { title: 'Features', subtitle: '', columns: 3, items: [{ icon: '⚡', title: 'Fast', text: '' }, { icon: '🎯', title: 'Precise', text: '' }, { icon: '🔒', title: 'Private', text: '' }] }, style: { padding: 'l' } },
+    { type: 'tabs', props: { title: 'How it works', subtitle: '', items: [{ label: 'Step 1', html: '<p>…</p>', image: '' }, { label: 'Step 2', html: '<p>…</p>', image: '' }] }, style: { padding: 'l', bg: 'alt' } },
+    { type: 'gallery', props: { columns: 3, lightbox: true, images: [] }, style: { padding: 'l' } },
+    { type: 'pricing', props: { title: 'Pricing', subtitle: '', plans: [{ name: 'Free', price: '$0', period: '', badge: '', features: 'Core features', buttonText: 'Download', buttonLink: '#', featured: false }, { name: 'Pro', price: '$9.99', period: '/one-time', badge: 'Best value', features: 'Everything\nAI Edit', buttonText: 'Buy', buttonLink: '#', featured: true }] }, style: { padding: 'l', align: 'center' } }] },
+  about: { name: 'About', icon: '👋', blocks: n => [
+    { type: 'heading', props: { text: n, level: 1, subtitle: 'Who we are and why we build.' }, style: { padding: 'l' } },
+    { type: 'imagetext', props: { image: '', imageRight: true, title: 'Our story', html: '<p>Tell it here.</p>', buttons: [] }, style: { padding: 'm' } },
+    { type: 'timeline', props: { title: 'Journey', subtitle: '', items: [{ when: '2024', title: 'Started', text: '', status: 'done' }, { when: '2026', title: 'The Forge', text: '', status: 'now' }] }, style: { padding: 'l' } },
+    { type: 'team', props: { title: 'Team', subtitle: '', columns: 3, items: [{ name: 'Spoeder', role: 'Founder', photo: '', bio: '', link: '', linkText: '' }] }, style: { padding: 'l', align: 'center', bg: 'alt' } },
+    { type: 'social', props: { title: 'Follow along', showLabels: true, size: '', items: [{ network: 'youtube', link: 'https://youtube.com/@IamSpoeder' }, { network: 'twitch', link: 'https://twitch.tv/IamSpoeder' }] }, style: { padding: 'l', align: 'center' } }] },
+  contact: { name: 'Contact', icon: '✉️', blocks: n => [
+    { type: 'heading', props: { text: n, level: 1, subtitle: "We'd love to hear from you." }, style: { padding: 'l', align: 'center' } },
+    { type: 'form', props: { title: '', subtitle: '', endpoint: '', email: 'hello@keycapstudios.com', button: 'Send', successText: 'Thanks!', fields: [{ label: 'Name', type: 'text', required: true, half: true }, { label: 'Email', type: 'email', required: true, half: true }, { label: 'Topic', type: 'select', options: 'Support\nBusiness\nOther', half: false }, { label: 'Message', type: 'textarea', required: true }] }, style: { padding: 'm', width: 'narrow' } },
+    { type: 'social', props: { title: '', showLabels: false, size: '', items: [{ network: 'discord', link: '' }, { network: 'email', link: 'hello@keycapstudios.com' }] }, style: { padding: 'm', align: 'center' } }] },
+  legal: { name: 'Legal / text page', icon: '📜', blocks: n => [
+    { type: 'heading', props: { text: n, level: 1, subtitle: 'Last updated: ' + new Date().toISOString().slice(0, 10) }, style: { padding: 's', width: 'narrow' } },
+    { type: 'text', props: { html: '<h2>Section</h2><p>Text.</p>' }, style: { padding: 's', width: 'narrow' } }] },
+};

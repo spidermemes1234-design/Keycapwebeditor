@@ -10,6 +10,8 @@
 <header id="top">
   <div class="brand">⌘ Keycap Web Editor <span id="ver"></span></div>
   <select id="pageSel" title="Page you're editing"></select>
+  <div class="seg" id="mode"><button data-m="edit" class="on" title="Click to select, double-click text to edit">✏️ Edit</button><button data-m="test" title="Buttons and links work like the real site (Ctrl+Enter)">▶ Test</button></div>
+  <span id="pasteHint" class="hidden" title="A block is copied. Ctrl+V to paste">📋</span>
   <div class="spacer"></div>
   <span id="status">Loading…</span>
   <button id="undoBtn" title="Undo (Ctrl+Z)">↶</button>
@@ -20,11 +22,13 @@
   <button id="menuBtn" title="More">⋯</button>
   <button class="primary" id="pubBtn">Publish</button>
   <div id="menu" class="pop hidden">
+    <button data-act="draft">Publish a private test version…</button>
     <button data-act="login">Cloudflare login (once)</button>
     <button data-act="backup">Make a backup now</button>
     <button data-act="backups">Restore a backup…</button>
     <button data-act="site">Open keycapstudios.com</button>
     <button data-act="folder">Show where my site is saved</button>
+    <button data-act="keys">Keyboard shortcuts</button>
   </div>
 </header>
 <main>
@@ -32,6 +36,7 @@
     <nav id="tabs">
       <button data-tab="blocks" class="on">Blocks</button>
       <button data-tab="pages">Pages</button>
+      <button data-tab="posts">Posts</button>
       <button data-tab="site">Site</button>
       <button data-tab="media">Media</button>
     </nav>
