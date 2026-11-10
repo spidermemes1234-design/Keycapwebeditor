@@ -96,7 +96,7 @@ module.exports.start = function start(ctx) {
   });
 
   const streamWrangler = (args, res, okMsg) => {
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    if (!res.headersSent) res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     const p = runWrangler(args, dataDir);
     p.stdout.on('data', d => res.write(d));
     p.stderr.on('data', d => res.write(d));
@@ -104,14 +104,32 @@ module.exports.start = function start(ctx) {
     p.on('close', code => res.end(code === 0 ? okMsg : `\n❌ Failed (code ${code}).\n`));
   };
 
+  // Is Cloudflare connected? (wrangler keeps the login and refreshes it automatically)
+  let cfCache = null;
+  app.get('/api/cf-status', (req, res) => {
+    if (cfCache && !req.query.fresh && Date.now() - cfCache.t < 60000) return res.json(cfCache.v);
+    let out = '';
+    const p = runWrangler(['whoami'], dataDir);
+    const done = v => { cfCache = { t: Date.now(), v }; if (!res.headersSent) res.json(v); };
+    p.stdout.on('data', d => out += d); p.stderr.on('data', d => out += d);
+    p.on('error', () => done({ loggedIn: false, error: true }));
+    p.on('close', () => {
+      const email = (/associated with the email ([^\s.]+@[^\s]+?)\.?\s/i.exec(out) || [])[1] || '';
+      done({ loggedIn: !/not authenticated|wrangler login/i.test(out) && /logged in|email|Account Name|Account ID/i.test(out), email });
+    });
+  });
+
   app.post('/api/login', (req, res) => {
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.write('Opening Cloudflare login in your browser…\nLog in with keycapstudiosza@gmail.com and click Allow.\n\n');
-    streamWrangler(['login'], res, '\n✅ Logged in to Cloudflare. You can publish now.\n');
+    cfCache = null;
+    streamWrangler(['login'], res, '\n✅ Connected to Cloudflare. You will stay logged in.\n');
   });
 
   app.post('/api/publish', (req, res) => {
     const draft = req.query.draft === '1';
     try { if (!draft) backup('publish'); build(SITE, DIST); } catch (e) { return res.status(500).end('Build failed: ' + e); }
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.write('Building site… done\nUploading to Cloudflare…\n');
     streamWrangler(['pages', 'deploy', DIST, '--project-name', PROJECT, '--branch', draft ? 'preview' : 'main', '--commit-dirty=true'], res,
       draft ? '\n✅ Test version published! Open the https://…pages.dev link above to check it. The real site has not changed.\n'

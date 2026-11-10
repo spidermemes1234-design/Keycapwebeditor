@@ -429,6 +429,7 @@ function sitePanel(P) {
     section('Colours & style', false,
       h('div', { class: 'row', style: 'flex-wrap:wrap' }, Object.entries(THEMES).map(([n, v]) => h('button', { class: 'sm', innerHTML: `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${v.accent};border:2px solid ${v.bg};margin-right:5px"></span>${n}`, onclick: () => { Object.assign(t, v); changed(true); } }))),
       field(t, { key: 'light', label: 'Light theme (dark text on light background)', type: 'toggle' }),
+      field(t, { key: 'tiles', label: 'App-tile art style (gradient square icons, like The Forge apps)', type: 'toggle' }),
       h('div', { class: 'row2' },
         field(t, { key: 'accent', label: 'Accent', type: 'color' }), field(t, { key: 'accent2', label: 'Accent 2', type: 'color' }),
         field(t, { key: 'bg', label: 'Background', type: 'color' }), field(t, { key: 'bg2', label: 'Panel background', type: 'color' }),
@@ -544,9 +545,32 @@ async function stream(url, title) {
   for (;;) { const { done, value } = await rd.read(); if (done) break; txt.textContent += dec.decode(value); txt.scrollTop = txt.scrollHeight; }
   return txt.textContent;
 }
+/* ---------- Cloudflare connection ---------- */
+let cf = { loggedIn: null };
+async function cfCheck(fresh) {
+  try { cf = await (await fetch('/api/cf-status' + (fresh ? '?fresh=1' : ''))).json(); } catch { cf = { loggedIn: false }; }
+  const bar = $('#cfbar');
+  bar.classList.toggle('hidden', cf.loggedIn !== false);
+  $('#cfState').textContent = cf.loggedIn ? '☁ Connected' + (cf.email ? ' as ' + cf.email : '') : '';
+  return cf.loggedIn;
+}
+async function cfConnect() {
+  $('#cfbar').querySelector('button').disabled = true;
+  const out = await stream('/api/login', 'Connecting to Cloudflare');
+  $('#logtxt').textContent += /Connected/.test(out) ? '' : '\nIf a browser tab opened, click "Allow", then try again.\n';
+  $('#cfbar').querySelector('button').disabled = false;
+  return cfCheck(true);
+}
+async function autoConnect() {
+  if (await cfCheck()) return;
+  let tried = false; try { tried = sessionStorage.getItem('cf-auto') === '1'; sessionStorage.setItem('cf-auto', '1'); } catch {}
+  if (!tried) { toast('Connecting to Cloudflare — click "Allow" in the browser tab that opens'); cfConnect(); }
+}
+
 async function publish(draft) {
   if (!confirm(draft ? 'Publish a private test version? You get a secret link to check it; the real site is not changed.' : 'Publish all changes to keycapstudios.com now?')) return;
   if (saveTimer) await save();
+  if (cf.loggedIn !== true && !(await cfCheck(true))) { toast('Connecting to Cloudflare first…'); if (!(await cfConnect())) return; }
   $('#pubBtn').disabled = true;
   const out = await stream('/api/publish' + (draft ? '?draft=1' : ''), draft ? 'Publishing test version' : 'Publishing');
   if (!/Published|Test version/.test(out) && /log ?in|authenticat|API_TOKEN/i.test(out)) $('#logtxt').textContent += '\n👉 Click ⋯ → "Cloudflare login (once)", then publish again.\n';
@@ -570,7 +594,7 @@ $('#menuBtn').onclick = e => { e.stopPropagation(); $('#menu').classList.toggle(
 document.addEventListener('click', () => $('#menu').classList.add('hidden'));
 $('#menu').addEventListener('click', async e => {
   const a = e.target.dataset.act; if (!a) return;
-  if (a === 'login') stream('/api/login', 'Cloudflare login');
+  if (a === 'login') cfConnect();
   if (a === 'draft') publish(true);
   if (a === 'backup') { if (saveTimer) await save(); await fetch('/api/backups', { method: 'POST' }); toast('Backup saved'); }
   if (a === 'backups') backupsDialog();
@@ -611,4 +635,5 @@ async function load() {
   renderAll(); refresh(); status('All changes saved');
 }
 fetch('/api/version').then(r => r.json()).then(v => $('#ver').textContent = 'v' + v.version);
-load();
+$('#cfbar button').onclick = cfConnect;
+load().then(() => setTimeout(autoConnect, 800));

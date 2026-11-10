@@ -1,10 +1,10 @@
 {
-  "version": "3.2.0",
-  "released": "2026-11-10T13:16:16.149Z",
+  "version": "3.3.0",
+  "released": "2026-11-10T13:21:31.556Z",
   "files": [
     {
       "path": "build.js",
-      "sha256": "54b285fb7ab70911c08250b49eec07001772be3590937c1b686ba8266259159d"
+      "sha256": "d3cf4878bdc977c71b39742f906dc96ce0d79da9c4de9fe616df30c4e06b83e6"
     },
     {
       "path": "defaults/assets/.keep",
@@ -16,15 +16,15 @@
     },
     {
       "path": "editor/editor.css",
-      "sha256": "dc09674a2f72799134e85646cabe6c3081132382f62646cec88b786828e0e01a"
+      "sha256": "cced580f6db8d9484d154c708576288234ed275c0331b6ce28902239ee1a89f2"
     },
     {
       "path": "editor/editor.js",
-      "sha256": "c2667f2f7d65c14b44d9b8c2605f63d577a1ccb067fde9c415e1586ba48fdc14"
+      "sha256": "85ce53dd7af82bf9c603d4d637eb93a97d4c3f3bb11b18e17974b47d19de22a5"
     },
     {
       "path": "editor/index.html",
-      "sha256": "fce2c1033f07a762996deca2187b72f92e70471d17a4ea14779efe0228bd88a2"
+      "sha256": "25951e02c0f3a7fa5849d6570776b087f406e4196133b0ce60647374876a3a38"
     },
     {
       "path": "editor/schema.js",
@@ -36,7 +36,7 @@
     },
     {
       "path": "server.js",
-      "sha256": "16fce977dfb2c87b8ae3cce6af1cc9456d3213aa0882bf3583385b2ee4a231fb"
+      "sha256": "2d1343d2b9cacb26e89e93689d7beceeddf8b4d799403b7df869e7e82686cdc7"
     },
     {
       "path": "site.js",
@@ -44,7 +44,7 @@
     },
     {
       "path": "styles.css",
-      "sha256": "822f885938596c67ea4111cf9d822f2f6caea8e1da4aff8048df0f72b8926888"
+      "sha256": "1219d94466791e6040d52e870abf6199c57c80304ac1d54b74bc9d0be33a7668"
     }
   ]
 }

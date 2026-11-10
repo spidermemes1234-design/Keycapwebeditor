@@ -13,6 +13,7 @@
   <div class="seg" id="mode"><button data-m="edit" class="on" title="Click to select, double-click text to edit">✏️ Edit</button><button data-m="test" title="Buttons and links work like the real site (Ctrl+Enter)">▶ Test</button></div>
   <span id="pasteHint" class="hidden" title="A block is copied. Ctrl+V to paste">📋</span>
   <div class="spacer"></div>
+  <span id="cfState" class="cfstate"></span>
   <span id="status">Loading…</span>
   <button id="undoBtn" title="Undo (Ctrl+Z)">↶</button>
   <button id="redoBtn" title="Redo (Ctrl+Y)">↷</button>
@@ -23,7 +24,7 @@
   <button class="primary" id="pubBtn">Publish</button>
   <div id="menu" class="pop hidden">
     <button data-act="draft">Publish a private test version…</button>
-    <button data-act="login">Cloudflare login (once)</button>
+    <button data-act="login">Reconnect Cloudflare</button>
     <button data-act="backup">Make a backup now</button>
     <button data-act="backups">Restore a backup…</button>
     <button data-act="site">Open keycapstudios.com</button>
@@ -31,6 +32,7 @@
     <button data-act="keys">Keyboard shortcuts</button>
   </div>
 </header>
+<div id="cfbar" class="hidden">☁ Not connected to Cloudflare yet, so Publish can't go live. <button class="primary sm">Connect Cloudflare</button> <span>A browser tab opens. Click <b>Allow</b> once and you stay logged in.</span></div>
 <main>
   <aside id="side">
     <nav id="tabs">

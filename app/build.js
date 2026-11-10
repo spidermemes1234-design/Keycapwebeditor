@@ -186,7 +186,7 @@ function renderPage(site, page, opts = {}) {
   const cookie = site.cookie && site.cookie.enabled ? `<div class="cookie" hidden><p>${esc(site.cookie.text || 'We use cookies to understand how the site is used.')}${site.cookie.link ? ` <a href="${url(site.cookie.link)}">Learn more</a>` : ''}</p><button class="btn primary sm" data-cookie="yes">Accept</button><button class="btn ghost sm" data-cookie="no">Decline</button></div>` : '';
   const blockCSS = (page.blocks || []).map(b => scopedCSS(b.id, b.style && b.style.css)).join('\n');
   return `<!doctype html>
-<html lang="${esc(seo.lang || 'en')}" class="btn-${esc(t.buttonShape || 'rounded')}${t.light ? ' light' : ''}">
+<html lang="${esc(seo.lang || 'en')}" class="btn-${esc(t.buttonShape || 'rounded')}${t.light ? ' light' : ''}${t.tiles ? ' tiles' : ''}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
