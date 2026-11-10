@@ -218,3 +218,20 @@ window.TEMPLATES = {
     { type: 'heading', props: { text: n, level: 1, subtitle: 'Last updated: ' + new Date().toISOString().slice(0, 10) }, style: { padding: 's', width: 'narrow' } },
     { type: 'text', props: { html: '<h2>Section</h2><p>Text.</p>' }, style: { padding: 's', width: 'narrow' } }] },
 };
+
+// ---- v3.1: sizing controls ----
+const RATIOS = [['16/9', 'Wide 16:9'], ['4/3', '4:3'], ['1/1', 'Square'], ['3/4', 'Tall 3:4'], ['auto', 'Original shape']];
+BLOCKS.cards.fields.splice(3, 0,
+  { group: 'Sizes (or drag the orange handle in the preview)' },
+  { key: 'imageRatio', label: 'Image shape', type: 'select', options: RATIOS },
+  { key: 'imageFit', label: 'Image fit', type: 'select', options: [['cover', 'Fill (crop edges)'], ['contain', 'Fit whole image (no crop)']] },
+  { key: 'imageHeight', label: 'Image height (px, empty = automatic)', type: 'number' },
+  { key: 'imagePad', label: 'Space around image when "Fit" (px)', type: 'number', when: p => p.imageFit === 'contain' },
+  { key: 'iconSize', label: 'Emoji icon size (px, default 44)', type: 'number' },
+  { group: 'Cards' });
+BLOCKS.image.fields = BLOCKS.image.fields.map(f => f.key === 'maxWidth' ? { key: 'maxWidth', label: 'Width (e.g. 600 for 600px, or 100%) — or drag the handle', type: 'text' } : f);
+BLOCKS.hero.fields.push({ key: 'imageWidth', label: 'Screenshot width (px, empty = full)', type: 'number' });
+BLOCKS.imagetext.fields.splice(2, 0, { key: 'imageWidth', label: 'Image width (px, empty = half the row)', type: 'number' });
+BLOCKS.team.fields.splice(3, 0, { key: 'photoSize', label: 'Photo size (px, default 96)', type: 'number' });
+BLOCKS.gallery.fields.splice(1, 0, { key: 'imageRatio', label: 'Image shape', type: 'select', options: [['4/3', '4:3'], ['16/9', 'Wide 16:9'], ['1/1', 'Square'], ['3/4', 'Tall 3:4'], ['auto', 'Original shape']] });
+STYLE_FIELDS.splice(STYLE_FIELDS.findIndex(f => f.key === 'minHeight') + 1, 0, { key: 'scale', label: 'Scale whole block (%, 100 = normal)', type: 'number' });

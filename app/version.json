@@ -1,10 +1,10 @@
 {
-  "version": "3.0.0",
-  "released": "2026-11-10T13:02:35.085Z",
+  "version": "3.1.0",
+  "released": "2026-11-10T13:11:04.837Z",
   "files": [
     {
       "path": "build.js",
-      "sha256": "ffe0757d80dcd9a3ed44fd92f0de95da8c3c8ced657ceb3fb6a878719be0cf9a"
+      "sha256": "adb412411abd24290807fb6c86e630f6cc70d7ffcd959681682cd7001ea3a665"
     },
     {
       "path": "defaults/assets/.keep",
@@ -28,7 +28,7 @@
     },
     {
       "path": "editor/schema.js",
-      "sha256": "ecfb9a0af8f0907fe01e0e6c44067dcd6452e4fd9907bd5823a5b728093926dc"
+      "sha256": "63de6efb2d12d9bdcc8e8b44081e9ab319bda0fb5c56ef8eb086c3e1c6948e95"
     },
     {
       "path": "migrate.js",
@@ -44,7 +44,7 @@
     },
     {
       "path": "styles.css",
-      "sha256": "76d65ff341f8ee940f0139bed631feb62712a839f90ec505a69b8fa30c0750be"
+      "sha256": "7120de9392e911631c503746a0b2e65744d1e70c685fe5b1ed6dea2aa86f3781"
     }
   ]
 }

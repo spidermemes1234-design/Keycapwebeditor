@@ -45,6 +45,8 @@ const socialIcon = k => SOCIAL[k] ? `<svg viewBox="0 0 24 24" width="22" height=
 
 /* ---------- blocks ---------- */
 function makeR(site, preview) {
+  const RS = (path, mode) => preview ? ` data-rs="${path}" data-rsm="${mode}"` : '';
+  const px = v => (v === '' || v == null || isNaN(Number(v))) ? '' : Number(v) + 'px';
   const T = (p, k) => preview ? `<span data-ed="${k}">${esc(get(p, k))}</span>` : esc(get(p, k));
   const H = (p, k) => preview ? `<div class="rich" data-edh="${k}">${rich(get(p, k))}</div>` : `<div class="rich">${rich(get(p, k))}</div>`;
   const ext = l => /^https?:/.test(l || '') ? ' target="_blank" rel="noopener"' : '';
@@ -62,24 +64,27 @@ function makeR(site, preview) {
   <h1>${T(p, 'title')}${p.highlight ? `<br><span class="hl">${T(p, 'highlight')}</span>` : ''}</h1>
   ${p.text ? `<p class="lead">${T(p, 'text')}</p>` : ''}
   ${buttons(p)}
-  ${p.image ? `<img class="hero-shot" src="${url(p.image)}" alt="">` : ''}`,
+  ${p.image ? `<img class="hero-shot" src="${url(p.image)}" alt=""${p.imageWidth ? ` style="width:${px(p.imageWidth)}"` : ''}${RS('imageWidth', 'w')}>` : ''}`,
     heading: p => `<h${p.level || 2} class="bh">${T(p, 'text')}</h${p.level || 2}>${p.subtitle ? `<p class="sub">${T(p, 'subtitle')}</p>` : ''}`,
     text: p => H(p, 'html'),
     image: p => {
-      const img = `<img src="${url(p.src)}" alt="${esc(p.alt)}" class="${p.rounded ? 'rounded' : ''}" style="max-width:${esc(p.maxWidth || '100%')}" loading="lazy">`;
-      return `<figure class="bimg">${p.link ? `<a href="${url(p.link)}"${ext(p.link)}>${img}</a>` : img}${p.caption ? `<figcaption>${T(p, 'caption')}</figcaption>` : ''}</figure>`;
+      const mw = /^\d+$/.test(String(p.maxWidth || '')) ? p.maxWidth + 'px' : (p.maxWidth || '100%');
+      const img = `<img src="${url(p.src)}" alt="${esc(p.alt)}" class="${p.rounded ? 'rounded' : ''}" style="max-width:${esc(mw)};width:${/px$/.test(mw) ? esc(mw) : 'auto'}" loading="lazy"${RS('maxWidth', 'w')}>`;
+      return p.src ? `<figure class="bimg">${p.link ? `<a href="${url(p.link)}"${ext(p.link)}>${img}</a>` : img}${p.caption ? `<figcaption>${T(p, 'caption')}</figcaption>` : ''}</figure>` : '<div class="ph-img">Choose an image</div>';
     },
     buttons: p => buttons(p),
     cards: p => `${head(p)}
   <div class="grid cols-${p.columns || 3}">${(p.items || []).map((c, i) => {
-    const inner = `${c.image ? `<img class="shot" src="${url(c.image)}" alt="" loading="lazy">` : c.icon ? `<div class="ico">${esc(c.icon)}</div>` : ''}<h3>${T(p, `items.${i}.title`)}</h3><p>${T(p, `items.${i}.text`)}</p>${tag(p, 'items.' + i)}`;
+    const shot = [p.imageRatio && p.imageRatio !== '16/9' ? `aspect-ratio:${p.imageRatio === 'auto' ? 'auto' : esc(p.imageRatio)}` : '', p.imageFit === 'contain' ? 'object-fit:contain;background:var(--bg2);padding:' + (Number(p.imagePad) || 0) + 'px' : '', p.imageHeight ? `height:${px(p.imageHeight)};aspect-ratio:auto` : ''].filter(Boolean).join(';');
+    const ic = p.iconSize ? ` style="width:${px(p.iconSize)};height:${px(p.iconSize)};font-size:${Math.round(p.iconSize * 0.5)}px"` : '';
+    const inner = `${c.image ? `<img class="shot${p.imageFit === 'contain' ? ' fit' : ''}" src="${url(c.image)}" alt="" loading="lazy"${shot ? ` style="${shot}"` : ''}${RS('imageHeight', 'h')}>` : c.icon ? `<div class="ico"${ic}${RS('iconSize', 'sq')}>${esc(c.icon)}</div>` : ''}<h3>${T(p, `items.${i}.title`)}</h3><p>${T(p, `items.${i}.text`)}</p>${tag(p, 'items.' + i)}`;
     return c.link && !preview ? `<a class="card link" href="${url(c.link)}"${ext(c.link)}>${inner}</a>` : `<div class="card${c.link ? ' link' : ''}"${c.link ? ` data-href="${url(c.link)}"` : ''}>${inner}</div>`;
   }).join('')}</div>`,
     features: p => `${head(p)}
   <div class="feats cols-${p.columns || 4}">${(p.items || []).map((f, i) => `<div class="feat"><h4>${f.icon ? `<span class="fi">${esc(f.icon)}</span>` : ''}${T(p, `items.${i}.title`)}</h4><p>${T(p, `items.${i}.text`)}</p></div>`).join('')}</div>`,
     columns: p => `<div class="cols cols-${(p.cols || []).length || 2} va-${p.valign || 'top'}">${(p.cols || []).map((c, i) => H(p, `cols.${i}.html`)).join('')}</div>`,
-    imagetext: p => `<div class="imgtext ${p.imageRight ? 'right' : ''}">${p.image ? `<img src="${url(p.image)}" alt="" class="rounded" loading="lazy">` : '<div class="ph-img">Add an image</div>'}<div>${p.title ? `<h2 class="bh">${T(p, 'title')}</h2>` : ''}${H(p, 'html')}${buttons(p)}</div></div>`,
-    gallery: p => `<div class="gallery cols-${p.columns || 3}${p.lightbox !== false ? ' lb' : ''}">${(p.images || []).map((im, i) => `<figure><img src="${url(im.src)}" alt="${esc(im.caption)}" loading="lazy">${im.caption ? `<figcaption>${T(p, `images.${i}.caption`)}</figcaption>` : ''}</figure>`).join('')}</div>`,
+    imagetext: p => `<div class="imgtext ${p.imageRight ? 'right' : ''}">${p.image ? `<img src="${url(p.image)}" alt="" class="rounded" loading="lazy"${p.imageWidth ? ` style="width:${px(p.imageWidth)};max-width:100%;justify-self:center"` : ''}${RS('imageWidth', 'w')}>` : '<div class="ph-img">Add an image</div>'}<div>${p.title ? `<h2 class="bh">${T(p, 'title')}</h2>` : ''}${H(p, 'html')}${buttons(p)}</div></div>`,
+    gallery: p => `<div class="gallery cols-${p.columns || 3}${p.lightbox !== false ? ' lb' : ''}"${p.imageRatio ? ` style="--gr:${esc(p.imageRatio)}"` : ''}>${(p.images || []).map((im, i) => `<figure><img src="${url(im.src)}" alt="${esc(im.caption)}" loading="lazy">${im.caption ? `<figcaption>${T(p, `images.${i}.caption`)}</figcaption>` : ''}</figure>`).join('')}</div>`,
     video: p => { const e = embedSrc(p.url); return `${p.title ? `<h2 class="bh">${T(p, 'title')}</h2>` : ''}${p.url ? `<div class="video"><iframe src="${url(e.src)}" title="${esc(p.title || 'Video')}" allowfullscreen loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture"></iframe></div>` : '<div class="ph-img">Paste a YouTube link</div>'}`; },
     embed: p => { const e = embedSrc(p.url); return p.url ? `<div class="embed" style="${e.ratio ? `aspect-ratio:${e.ratio};` : `height:${e.height}px;`}${e.max ? `max-width:${e.max}px;margin:0 auto;` : ''}"><iframe src="${url(e.src)}" loading="lazy" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture; clipboard-write"></iframe></div>` : '<div class="ph-img">Paste a Steam, Twitch, Spotify, TikTok, Vimeo or YouTube link</div>'; },
     cta: p => `<div class="cta"><h2>${T(p, 'title')}</h2>${p.text ? `<p>${T(p, 'text')}</p>` : ''}${buttons(p)}</div>`,
@@ -89,8 +94,8 @@ function makeR(site, preview) {
     quote: p => `<blockquote class="quote"><p>“${T(p, 'text')}”</p>${p.author ? `<cite>— ${T(p, 'author')}</cite>` : ''}</blockquote>`,
     testimonials: p => `${head(p)}<div class="${p.layout === 'slider' ? 'slider' : 'grid cols-' + (p.columns || 3)}">${(p.items || []).map((t, i) => `<figure class="card testi">${t.rating ? `<div class="stars">${'★'.repeat(Math.min(5, t.rating))}${'☆'.repeat(5 - Math.min(5, t.rating))}</div>` : ''}<blockquote>“${T(p, `items.${i}.text`)}”</blockquote><figcaption>${t.avatar ? `<img src="${url(t.avatar)}" alt="">` : ''}<span><b>${T(p, `items.${i}.name`)}</b><small>${T(p, `items.${i}.role`)}</small></span></figcaption></figure>`).join('')}</div>`,
     stats: p => `${head(p)}<div class="stats cols-${(p.items || []).length || 4}">${(p.items || []).map((s, i) => `<div class="stat"><div class="num" data-count="${esc(s.value)}">${esc(s.value)}</div><div class="lbl">${T(p, `items.${i}.label`)}</div></div>`).join('')}</div>`,
-    logos: p => `${p.title ? `<p class="logos-title">${T(p, 'title')}</p>` : ''}<div class="logos ${p.scroll ? 'marquee' : ''}"><div class="track">${[...(p.items || []), ...(p.scroll ? (p.items || []) : [])].map(l => { const im = `<img src="${url(l.src)}" alt="${esc(l.name)}" loading="lazy" style="height:${Number(p.height) || 40}px">`; return l.link ? `<a href="${url(l.link)}"${ext(l.link)}>${im}</a>` : im; }).join('')}</div></div>`,
-    team: p => `${head(p)}<div class="grid cols-${p.columns || 4}">${(p.items || []).map((m, i) => `<div class="card member">${m.photo ? `<img src="${url(m.photo)}" alt="" loading="lazy">` : `<div class="avatar">${esc((m.name || '?')[0])}</div>`}<h3>${T(p, `items.${i}.name`)}</h3><p class="role">${T(p, `items.${i}.role`)}</p>${m.bio ? `<p>${T(p, `items.${i}.bio`)}</p>` : ''}${m.link ? `<a href="${url(m.link)}"${ext(m.link)}>${esc(m.linkText || 'Profile')} →</a>` : ''}</div>`).join('')}</div>`,
+    logos: p => `${p.title ? `<p class="logos-title">${T(p, 'title')}</p>` : ''}<div class="logos ${p.scroll ? 'marquee' : ''}"><div class="track">${[...(p.items || []), ...(p.scroll ? (p.items || []) : [])].map(l => { const im = `<img src="${url(l.src)}" alt="${esc(l.name)}" loading="lazy" style="height:${Number(p.height) || 40}px"${RS('height', 'h')}>`; return l.link ? `<a href="${url(l.link)}"${ext(l.link)}>${im}</a>` : im; }).join('')}</div></div>`,
+    team: p => `${head(p)}<div class="grid cols-${p.columns || 4}">${(p.items || []).map((m, i) => `<div class="card member">${m.photo ? `<img src="${url(m.photo)}" alt="" loading="lazy"${p.photoSize ? ` style="width:${px(p.photoSize)};height:${px(p.photoSize)}"` : ''}${RS('photoSize', 'sq')}>` : `<div class="avatar"${p.photoSize ? ` style="width:${px(p.photoSize)};height:${px(p.photoSize)}"` : ''}${RS('photoSize', 'sq')}>${esc((m.name || '?')[0])}</div>`}<h3>${T(p, `items.${i}.name`)}</h3><p class="role">${T(p, `items.${i}.role`)}</p>${m.bio ? `<p>${T(p, `items.${i}.bio`)}</p>` : ''}${m.link ? `<a href="${url(m.link)}"${ext(m.link)}>${esc(m.linkText || 'Profile')} →</a>` : ''}</div>`).join('')}</div>`,
     timeline: p => `${head(p)}<ol class="timeline">${(p.items || []).map((t, i) => `<li class="${t.status || ''}"><span class="dot"></span><div><span class="when">${T(p, `items.${i}.when`)}</span><h3>${T(p, `items.${i}.title`)}</h3><p>${T(p, `items.${i}.text`)}</p></div></li>`).join('')}</ol>`,
     tabs: p => `${head(p)}<div class="tabs" data-tabs><div class="tablist">${(p.items || []).map((t, i) => `<button type="button" class="${i ? '' : 'on'}" data-tab="${i}">${esc(t.label)}</button>`).join('')}</div>${(p.items || []).map((t, i) => `<div class="tabpane ${i ? '' : 'on'}" data-pane="${i}">${t.image ? `<img src="${url(t.image)}" alt="" class="rounded" loading="lazy">` : ''}${H(p, `items.${i}.html`)}</div>`).join('')}</div>`,
     countdown: p => `${p.title ? `<h2 class="bh">${T(p, 'title')}</h2>` : ''}<div class="countdown" data-to="${esc(p.date)}" data-done="${esc(p.doneText || '')}">${['days', 'hours', 'minutes', 'seconds'].map(u => `<div><b data-u="${u}">00</b><span>${u}</span></div>`).join('')}</div>${buttons(p)}`,
@@ -132,6 +137,7 @@ function blockHTML(R, b, preview) {
   if (s.bg === 'gradient') css.push(`background:linear-gradient(${Number(s.gradAngle ?? 135)}deg,${s.gradFrom || '#ff7a1a'},${s.gradTo || '#13151a'})`);
   if (s.bg === 'image' && s.bgImage) css.push(`background:linear-gradient(rgba(0,0,0,${(s.overlay ?? 55) / 100}),rgba(0,0,0,${(s.overlay ?? 55) / 100})),url('${url(s.bgImage)}') center/cover${s.parallax ? ' fixed' : ''}`);
   if (s.textColor) css.push(`color:${s.textColor}`);
+  if (s.scale && Number(s.scale) !== 100) css.push(`zoom:${Number(s.scale) / 100}`);
   if (s.minHeight) css.push(`min-height:${Number(s.minHeight)}vh;display:flex;align-items:center`);
   const attrs = `${s.anchor ? ` id="${esc(s.anchor)}"` : ''}${css.length ? ` style="${esc(css.join(';'))}"` : ''}${preview ? ` data-bid="${esc(b.id)}"` : ''}${s.delay ? ` data-delay="${Number(s.delay)}"` : ''}`;
   return `<section class="${esc(cls)}"${attrs}><div class="wrap">${r(b.props || {})}</div></section>`;
@@ -225,6 +231,10 @@ body:not(.ktest) [data-bid]:hover{outline:2px dashed rgba(255,122,26,.55);outlin
 body:not(.ktest) [data-bid].sel{outline:2px solid #ff7a1a;outline-offset:-2px}
 body:not(.ktest) [data-ed]:hover,body:not(.ktest) [data-edh]:hover{box-shadow:0 0 0 1px rgba(255,122,26,.5);border-radius:3px}
 [contenteditable=true]{outline:2px solid #ffb547!important;outline-offset:2px;cursor:text;border-radius:3px}
+.krs{position:absolute;display:none;width:18px;height:18px;border-radius:5px;background:#ff7a1a;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:nwse-resize;z-index:9999}
+body.ktest .krs{display:none!important}
+.krs-lab{position:absolute;background:#111;color:#fff;font:12px system-ui;padding:3px 7px;border-radius:5px;z-index:10000;pointer-events:none}
+[data-rs]:hover{outline:1px dashed rgba(255,122,26,.7)}
 </style>
 <script>
 (function(){
@@ -252,6 +262,20 @@ addEventListener('message',e=>{const d=e.data||{};if(!d.kws)return;
  if(d.t==='highlight'){document.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));const el=document.querySelector('[data-bid="'+d.id+'"]');if(el){el.classList.add('sel');if(d.scroll)el.scrollIntoView({behavior:'smooth',block:'center'})}}
  if(d.t==='mode'){test=d.test;document.body.classList.toggle('ktest',test);if(test)document.querySelectorAll('.anim').forEach(x=>x.classList.remove('in'));}
 });
+// drag-to-resize images/icons
+const hd=document.createElement('div');hd.className='krs';hd.title='Drag to resize';document.body.append(hd);let tgt=null,drag=null;
+const place=el=>{const r=el.getBoundingClientRect();hd.style.left=(r.right+scrollX-9)+'px';hd.style.top=(r.bottom+scrollY-9)+'px';hd.style.display='block';};
+document.addEventListener('mouseover',e=>{if(test||drag)return;const el=e.target.closest('[data-rs]');if(el){tgt=el;place(el);}});
+document.addEventListener('scroll',()=>{if(tgt&&!drag)place(tgt)},true);
+hd.addEventListener('mousedown',e=>{if(!tgt)return;e.preventDefault();e.stopPropagation();const r=tgt.getBoundingClientRect();drag={x:e.clientX,y:e.clientY,w:r.width,h:r.height,el:tgt,m:tgt.dataset.rsm};
+ const lab=document.createElement('div');lab.className='krs-lab';document.body.append(lab);drag.lab=lab;});
+document.addEventListener('mousemove',e=>{if(!drag)return;const d=drag,el=d.el;let v;
+ if(d.m==='h'){v=Math.max(16,Math.round(d.h+e.clientY-d.y));el.style.height=v+'px';el.style.aspectRatio='auto';if(el.closest('.logos'))el.closest('.logos').querySelectorAll('img').forEach(i=>i.style.height=v+'px');else el.closest('.grid')&&el.closest('.grid').querySelectorAll('.shot').forEach(i=>{i.style.height=v+'px';i.style.aspectRatio='auto'});}
+ else if(d.m==='sq'){v=Math.max(16,Math.round(d.w+Math.max(e.clientX-d.x,e.clientY-d.y)));const all=el.closest('.grid')?el.closest('.grid').querySelectorAll('[data-rs="'+el.dataset.rs+'"]'):[el];all.forEach(i=>{i.style.width=i.style.height=v+'px';i.style.fontSize=Math.round(v*.5)+'px'});}
+ else{v=Math.max(40,Math.round(d.w+e.clientX-d.x));el.style.width=v+'px';el.style.maxWidth='100%';}
+ d.v=v;place(el);d.lab.textContent=v+'px';d.lab.style.left=(e.clientX+scrollX+14)+'px';d.lab.style.top=(e.clientY+scrollY+14)+'px';});
+document.addEventListener('mouseup',()=>{if(!drag)return;const d=drag;drag=null;d.lab.remove();if(d.v==null)return;const b=d.el.closest('[data-bid]');
+ P({t:'edit',id:b.dataset.bid,path:d.el.dataset.rs,value:d.el.dataset.rs==='maxWidth'?d.v+'px':d.v});});
 P({t:'ready'});
 })();
 </script>`;
