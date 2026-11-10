@@ -1,10 +1,10 @@
 {
-  "version": "3.3.0",
-  "released": "2026-11-10T13:21:31.556Z",
+  "version": "3.3.1",
+  "released": "2026-11-10T13:23:06.702Z",
   "files": [
     {
       "path": "build.js",
-      "sha256": "d3cf4878bdc977c71b39742f906dc96ce0d79da9c4de9fe616df30c4e06b83e6"
+      "sha256": "8475286fdc4d1e3ec484593e46915c93418f0824352121670347c6e0e2785d5a"
     },
     {
       "path": "defaults/assets/.keep",
