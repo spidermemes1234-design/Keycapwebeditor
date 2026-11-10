@@ -1,0 +1,4 @@
+node_modules/
+launcher/bundled-app/
+out/
+dist/

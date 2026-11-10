@@ -1,0 +1,38 @@
+{
+  "version": "1.0.0",
+  "released": "2026-11-10T11:56:14.955Z",
+  "files": [
+    {
+      "path": "build.js",
+      "sha256": "aa3372b6a7084cf067c2e78018d1911ed4b51f565e1eaaf2b1d44b25d60394c4"
+    },
+    {
+      "path": "defaults/assets/.keep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "defaults/content.json",
+      "sha256": "590a8785ee0fd70b958172cc1de87c12742d9cd20088a995d070c8c4735d332b"
+    },
+    {
+      "path": "defaults/pages/privacy.html",
+      "sha256": "2d32a248487b4cb898046501433f2e07cbfc78b60d235ced3470d4a207245cb4"
+    },
+    {
+      "path": "defaults/pages/terms.html",
+      "sha256": "6eded8daf27a08a297ebb1de593523c78b0441d0a1b4a2df0f773b5de1903ee0"
+    },
+    {
+      "path": "editor/index.html",
+      "sha256": "c13de773e6d5e5a42ecd8f3b054fdd8201f0eebc1f69647229de9148af897640"
+    },
+    {
+      "path": "server.js",
+      "sha256": "eafd6a8b4d82acd8c9db9b7594dad375ede5f48588307e15ebe210b26fd4a4f6"
+    },
+    {
+      "path": "styles.css",
+      "sha256": "25cd6820af6322c816415c36a4f18a0f5e3dfff4b826c786ced51e376af0b1b7"
+    }
+  ]
+}

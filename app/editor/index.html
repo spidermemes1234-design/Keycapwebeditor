@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Keycap Web Editor</title>
+<style>
+:root{--bg:#0e0f12;--panel:#16181d;--card:#1c1f26;--line:#2a2e37;--text:#e9eaee;--muted:#9aa0ad;--accent:#ff7a1a;--ok:#4ade80;--bad:#f87171}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,Segoe UI,Roboto,sans-serif;height:100vh;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:15px;margin:0;font-weight:700}
+header .status{color:var(--muted);font-size:13px;margin-right:auto}
+header .status.dirty{color:var(--accent)}
+button{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 14px;font:inherit;cursor:pointer}
+button:hover{border-color:#3a3f4a}
+button.primary{background:var(--accent);border-color:var(--accent);color:#1a0d02;font-weight:700}
+button.small{padding:3px 9px;font-size:12px}
+button.danger{color:var(--bad)}
+main{flex:1;display:grid;grid-template-columns:440px 1fr;min-height:0}
+#form{overflow:auto;border-right:1px solid var(--line);padding:12px}
+details{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:10px}
+summary{padding:11px 14px;cursor:pointer;font-weight:700;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ ";color:var(--accent)}
+details[open] summary::before{content:"▾ "}
+.sec{padding:0 14px 14px}
+label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+input[type=text],textarea,select{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:7px;padding:7px 9px;font:inherit}
+textarea{min-height:70px;resize:vertical}
+textarea.code{min-height:360px;font-family:Consolas,monospace;font-size:12px}
+input[type=color]{width:46px;height:30px;border:1px solid var(--line);border-radius:6px;background:none;padding:0}
+.item{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:10px}
+.item .bar{display:flex;gap:6px;align-items:center}
+.item .bar strong{margin-right:auto;font-size:13px}
+.imgrow{display:flex;gap:8px;align-items:center}
+.imgrow img{height:36px;border-radius:5px;border:1px solid var(--line)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#right{display:flex;flex-direction:column;min-height:0}
+#tabs{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
+#tabs button.on{border-color:var(--accent)}
+iframe{flex:1;border:0;background:#fff;width:100%}
+#log{display:none;position:fixed;right:16px;bottom:16px;width:560px;max-height:50vh;overflow:auto;background:#0a0b0d;border:1px solid var(--line);border-radius:10px;padding:12px;font:12px/1.5 Consolas,monospace;white-space:pre-wrap;z-index:5}
+#log .x{position:sticky;top:0;float:right}
+.hint{color:var(--muted);font-size:12px;margin-top:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>⌘ Keycap Web Editor</h1><span id="ver" style="color:var(--muted);font-size:12px"></span>
+  <span class="status" id="status">Loading…</span>
+  <button id="loginBtn" title="Only needed once">Cloudflare login</button>
+  <button id="saveBtn">Save</button>
+  <button class="primary" id="pubBtn">Publish to keycapstudios.com</button>
+</header>
+<main>
+  <div id="form"></div>
+  <div id="right">
+    <div id="tabs">
+      <button class="on" data-p="/preview/index.html">Home</button>
+      <button data-p="/preview/privacy.html">Privacy</button>
+      <button data-p="/preview/terms.html">Terms</button>
+      <span style="margin-left:auto;color:var(--muted);font-size:12px;align-self:center">Preview updates when you save</span>
+    </div>
+    <iframe id="pv" src="about:blank"></iframe>
+  </div>
+</main>
+<div id="log"><button class="small x" onclick="this.parentNode.style.display='none'">Close</button><span id="logtxt"></span></div>
+
+<script>
+let C, PRIV, TERMS, dirty = false, page = '/preview/index.html';
+const $ = s => document.querySelector(s);
+const el = (t, a = {}, ...kids) => { const e = document.createElement(t); Object.assign(e, a); kids.forEach(k => e.append(k)); return e; };
+
+function setDirty(d) { dirty = d; const s = $('#status'); s.textContent = d ? 'Unsaved changes' : 'All changes saved'; s.className = 'status' + (d ? ' dirty' : ''); }
+
+function field(obj, key, lbl, type = 'text') {
+  const w = el('div'); w.append(el('label', { textContent: lbl }));
+  let inp;
+  if (type === 'textarea') inp = el('textarea', { value: obj[key] ?? '' });
+  else if (type === 'color') inp = el('input', { type: 'color', value: obj[key] ?? '#ff7a1a' });
+  else if (type === 'select') { inp = el('select'); [['free','Green (free)'],['pro','Orange (paid/add-on)'],['','Grey']].forEach(([v,t]) => inp.append(el('option', { value: v, textContent: t, selected: obj[key] === v }))); }
+  else inp = el('input', { type: 'text', value: obj[key] ?? '' });
+  inp.addEventListener('input', () => { obj[key] = inp.value; setDirty(true); });
+  w.append(inp); return w;
+}
+
+function imageField(obj, key, lbl) {
+  const w = el('div'); w.append(el('label', { textContent: lbl }));
+  const row = el('div', { className: 'imgrow' });
+  const draw = () => {
+    row.innerHTML = '';
+    if (obj[key]) row.append(el('img', { src: '/preview' + obj[key] }));
+    const file = el('input', { type: 'file', accept: 'image/*', style: 'display:none' });
+    const pick = el('button', { className: 'small', textContent: obj[key] ? 'Change image' : 'Upload image', onclick: () => file.click() });
+    file.onchange = async () => {
+      const f = file.files[0]; if (!f) return;
+      const data = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(f); });
+      const res = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: f.name, data }) }).then(r => r.json());
+      if (res.url) { obj[key] = res.url; setDirty(true); draw(); } else alert(res.error || 'Upload failed');
+    };
+    row.append(pick, file);
+    if (obj[key]) row.append(el('button', { className: 'small danger', textContent: 'Remove', onclick: () => { obj[key] = ''; setDirty(true); draw(); } }));
+  };
+  draw(); w.append(row); return w;
+}
+
+function section(title, open, ...kids) {
+  const d = el('details', { open }); d.append(el('summary', { textContent: title }), el('div', { className: 'sec' }, ...kids)); return d;
+}
+
+function list(arr, nameKey, makeFields, blank, addLabel) {
+  const box = el('div');
+  const draw = () => {
+    box.innerHTML = '';
+    arr.forEach((it, i) => {
+      const bar = el('div', { className: 'bar' },
+        el('strong', { textContent: it[nameKey] || '(untitled)' }),
+        el('button', { className: 'small', textContent: '↑', title: 'Move up', onclick: () => { if (i) { [arr[i-1], arr[i]] = [arr[i], arr[i-1]]; setDirty(true); draw(); } } }),
+        el('button', { className: 'small', textContent: '↓', title: 'Move down', onclick: () => { if (i < arr.length-1) { [arr[i+1], arr[i]] = [arr[i], arr[i+1]]; setDirty(true); draw(); } } }),
+        el('button', { className: 'small danger', textContent: 'Delete', onclick: () => { if (confirm('Delete "' + (it[nameKey] || 'this item') + '"?')) { arr.splice(i, 1); setDirty(true); draw(); } } }));
+      box.append(el('div', { className: 'item' }, bar, ...makeFields(it)));
+    });
+    box.append(el('button', { textContent: addLabel, style: 'margin-top:10px', onclick: () => { arr.push(structuredClone(blank)); setDirty(true); draw(); } }));
+  };
+  draw(); return box;
+}
+
+function textBlock(getter, setter) {
+  const t = el('textarea', { className: 'code', value: getter() });
+  t.addEventListener('input', () => { setter(t.value); setDirty(true); }); return t;
+}
+
+function render() {
+  const f = $('#form'); f.innerHTML = '';
+  const s = C.site, h = C.hero;
+  f.append(
+    section('Site settings', false,
+      field(s, 'brand', 'Studio name'), field(s, 'title', 'Browser tab title'),
+      field(s, 'description', 'Google search description', 'textarea'), field(s, 'contactEmail', 'Contact email'),
+      el('div', { className: 'row2' }, field(s, 'accentColor', 'Accent colour 1', 'color'), field(s, 'accentColor2', 'Accent colour 2', 'color'))),
+    section('Top banner (hero)', true,
+      field(h, 'eyebrow', 'Small label above title'), field(h, 'titleLine1', 'Title line 1'), field(h, 'titleLine2', 'Title line 2 (coloured)'),
+      field(h, 'lead', 'Intro text', 'textarea'),
+      el('div', { className: 'row2' }, field(h, 'primaryButton', 'Main button'), field(h, 'secondaryButton', 'Second button')),
+      imageField(h, 'image', 'Big screenshot under the banner (optional)')),
+    section('Apps', false,
+      field(C.appsSection, 'title', 'Section title'), field(C.appsSection, 'subtitle', 'Section subtitle', 'textarea'),
+      list(C.apps, 'name', a => [
+        el('div', { className: 'row2' }, field(a, 'name', 'App name'), field(a, 'icon', 'Emoji icon')),
+        field(a, 'text', 'Description', 'textarea'),
+        el('div', { className: 'row2' }, field(a, 'tag', 'Badge text'), field(a, 'tagStyle', 'Badge colour', 'select')),
+        imageField(a, 'image', 'Screenshot (replaces the emoji)')],
+        { icon: '✨', name: 'New app', text: '', tag: 'Add-on', tagStyle: 'pro', image: '' }, '+ Add app')),
+    section('Features', false,
+      field(C.featuresSection, 'title', 'Section title'), field(C.featuresSection, 'subtitle', 'Section subtitle', 'textarea'),
+      list(C.features, 'title', x => [field(x, 'title', 'Title'), field(x, 'text', 'Text', 'textarea')], { title: 'New feature', text: '' }, '+ Add feature')),
+    section('News & updates', false,
+      el('div', { className: 'hint', textContent: 'The News section only appears on the site when there is at least one post. Newest first.' }),
+      list(C.news, 'title', n => [el('div', { className: 'row2' }, field(n, 'title', 'Title'), field(n, 'date', 'Date')), field(n, 'text', 'Text', 'textarea')],
+        { title: 'New update', date: new Date().toISOString().slice(0, 10), text: '' }, '+ Add news post')),
+    section('Steam / download box', false,
+      field(C.cta, 'title', 'Title'), field(C.cta, 'text', 'Text', 'textarea'),
+      field(C.cta, 'buttonText', 'Button text'), field(C.cta, 'buttonLink', 'Button link (Steam store URL)')),
+    section('Privacy Policy page', false, el('div', { className: 'hint', textContent: 'HTML. Use <h2> for headings, <p> for paragraphs, <ul><li> for lists.' }), textBlock(() => PRIV, v => PRIV = v)),
+    section('Terms of Service page', false, el('div', { className: 'hint', textContent: 'HTML, same as above.' }), textBlock(() => TERMS, v => TERMS = v)));
+}
+
+async function load() {
+  const d = await fetch('/api/content').then(r => r.json());
+  C = d.content; PRIV = d.privacy; TERMS = d.terms;
+  C.news ||= [];
+  render(); setDirty(false); refresh();
+}
+function refresh() { $('#pv').src = page + '?t=' + Date.now(); }
+
+async function save() {
+  await fetch('/api/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: C, privacy: PRIV, terms: TERMS }) });
+  setDirty(false); refresh();
+}
+
+async function streamTo(url) {
+  const log = $('#log'), txt = $('#logtxt'); log.style.display = 'block'; txt.textContent = '';
+  const res = await fetch(url, { method: 'POST' });
+  const rd = res.body.getReader(), dec = new TextDecoder();
+  for (;;) { const { done, value } = await rd.read(); if (done) break; txt.textContent += dec.decode(value); log.scrollTop = log.scrollHeight; }
+  return txt.textContent;
+}
+async function login() { $('#loginBtn').disabled = true; await streamTo('/api/login'); $('#loginBtn').disabled = false; }
+
+async function publish() {
+  if (!confirm('Publish your changes to keycapstudios.com now?')) return;
+  await save();
+  $('#pubBtn').disabled = true;
+  const out = await streamTo('/api/publish');
+  if (/not logged in|login|authenticat|CLOUDFLARE_API_TOKEN/i.test(out) && !/Published!/.test(out))
+    $('#logtxt').textContent += '\n👉 Click "Cloudflare login" at the top (only needed once), then Publish again.\n';
+  $('#pubBtn').disabled = false;
+}
+
+$('#saveBtn').onclick = save;
+$('#pubBtn').onclick = publish;
+$('#loginBtn').onclick = login;
+fetch('/api/version').then(r => r.json()).then(v => $('#ver').textContent = 'v' + v.version);
+document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); save(); } });
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#tabs button').forEach(x => x.classList.remove('on')); b.classList.add('on'); page = b.dataset.p; refresh();
+});
+window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+load();
+</script>
+</body>
+</html>

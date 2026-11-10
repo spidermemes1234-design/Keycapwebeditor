@@ -1,0 +1,13 @@
+{
+  "name": "keycap-web-editor",
+  "productName": "Keycap Web Editor",
+  "version": "1.0.0",
+  "description": "Edit and publish keycapstudios.com",
+  "main": "main.js",
+  "author": "Keycap Studios",
+  "private": true,
+  "dependencies": {
+    "express": "^4.21.0",
+    "wrangler": "^4.0.0"
+  }
+}
