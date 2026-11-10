@@ -77,7 +77,7 @@ function runWrangler(args, cwd) {
 }
 
 async function boot() {
-  splash = new BrowserWindow({ width: 380, height: 170, frame: false, resizable: false, backgroundColor: '#0e0f12', show: true });
+  splash = new BrowserWindow({ icon: path.join(__dirname, 'editor-icon.ico'), width: 380, height: 170, frame: false, resizable: false, backgroundColor: '#0e0f12', show: true });
   splash.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(
     `<body style="margin:0;background:#0e0f12;color:#e9eaee;font:14px system-ui,Segoe UI;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh">
      <div style="font-size:18px;font-weight:800;margin-bottom:10px"><span style="color:#ff7a1a">⌘</span> Keycap Web Editor</div>
@@ -110,7 +110,7 @@ async function boot() {
 
   const win = new BrowserWindow({
     width: 1440, height: 900, minWidth: 960, minHeight: 600, show: false, backgroundColor: '#0e0f12',
-    title: 'Keycap Web Editor', autoHideMenuBar: true,
+    title: 'Keycap Web Editor', autoHideMenuBar: true, icon: path.join(__dirname, 'editor-icon.ico'),
   });
   win.webContents.setWindowOpenHandler(({ url: u }) => { shell.openExternal(u); return { action: 'deny' }; });
   win.webContents.on('will-navigate', (e, u) => { if (!u.startsWith(url)) { e.preventDefault(); shell.openExternal(u); } });
