@@ -78,7 +78,9 @@ function makeR(site, preview) {
     const shot = [p.imageRatio && p.imageRatio !== '16/9' ? `aspect-ratio:${p.imageRatio === 'auto' ? 'auto' : esc(p.imageRatio)}` : '', p.imageFit === 'contain' ? 'object-fit:contain;background:var(--bg2);padding:' + (Number(p.imagePad) || 0) + 'px' : '', p.imageHeight ? `height:${px(p.imageHeight)};aspect-ratio:auto` : ''].filter(Boolean).join(';');
     const ic = p.iconSize ? ` style="width:${px(p.iconSize)};height:${px(p.iconSize)};font-size:${Math.round(p.iconSize * 0.5)}px"` : '';
     const inner = `${c.image ? `<img class="shot${p.imageFit === 'contain' ? ' fit' : ''}" src="${url(c.image)}" alt="" loading="lazy"${shot ? ` style="${shot}"` : ''}${RS('imageHeight', 'h')}>` : c.icon ? `<div class="ico"${ic}${RS('iconSize', 'sq')}>${esc(c.icon)}</div>` : ''}<h3>${T(p, `items.${i}.title`)}</h3><p>${T(p, `items.${i}.text`)}</p>${tag(p, 'items.' + i)}`;
-    return c.link && !preview ? `<a class="card link" href="${url(c.link)}"${ext(c.link)}>${inner}</a>` : `<div class="card${c.link ? ' link' : ''}"${c.link ? ` data-href="${url(c.link)}"` : ''}>${inner}</div>`;
+    const g = c.gradFrom || c.gradTo ? ` style="--g1:${esc(c.gradFrom || c.gradTo)};--g2:${esc(c.gradTo || c.gradFrom)}"` : '';
+    const gc = g ? ' gcard' : '';
+    return c.link && !preview ? `<a class="card link${gc}" href="${url(c.link)}"${ext(c.link)}${g}>${inner}</a>` : `<div class="card${c.link ? ' link' : ''}${gc}"${c.link ? ` data-href="${url(c.link)}"` : ''}${g}>${inner}</div>`;
   }).join('')}</div>`,
     features: p => `${head(p)}
   <div class="feats cols-${p.columns || 4}">${(p.items || []).map((f, i) => `<div class="feat"><h4>${f.icon ? `<span class="fi">${esc(f.icon)}</span>` : ''}${T(p, `items.${i}.title`)}</h4><p>${T(p, `items.${i}.text`)}</p></div>`).join('')}</div>`,
@@ -152,10 +154,11 @@ function navHTML(site) {
     : `<a href="${url(n.link)}">${esc(n.label)}</a>`;
   const logo = t.logoImage ? `<img src="${url(t.logoImage)}" alt="${esc(t.brand)}" class="logo-img">` : `<span class="key">${esc(t.logoIcon || '⌘')}</span>`;
   const cta = site.header && site.header.ctaText ? `<a class="btn primary sm nav-cta" href="${url(site.header.ctaLink)}">${esc(site.header.ctaText)}</a>` : '';
+  const steam = site.header && site.header.steamLogin ? `<a class="steam-login" href="/auth/steam" data-steam><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="${SOCIAL.steam[1]}"/></svg><span>${esc(site.header.steamText || 'Sign in with Steam')}</span></a>` : '';
   return `<header class="nav${site.header && site.header.sticky === false ? ' static' : ''}${site.header && site.header.transparent ? ' clear' : ''}"><div class="wrap">
   <a class="logo" href="/">${logo}${t.hideBrandText ? '' : `<span>${esc(t.brand)}</span>`}</a>
   <input type="checkbox" id="mnav" hidden><label for="mnav" class="burger" aria-label="Menu">☰</label>
-  <nav class="links">${(site.nav || []).map(item).join('')}${cta}</nav>
+  <nav class="links">${(site.nav || []).map(item).join('')}${cta}${steam}</nav>
 </div></header>`;
 }
 
@@ -331,9 +334,79 @@ function build(SITE, DIST, opts = {}) {
   const dom = (site.seo && site.seo.domain || '').replace(/\/$/, '');
   if (dom) fs.writeFileSync(path.join(DIST, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map(u => `<url><loc>${esc(dom + u)}</loc></url>`).join('')}</urlset>`);
   fs.writeFileSync(path.join(DIST, 'robots.txt'), site.seo && site.seo.noindexAll ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\n${dom ? `Sitemap: ${dom}/sitemap.xml\n` : ''}`);
+  writeFunctions(site, path.dirname(DIST), preview);
   const red = (site.redirects || []).filter(r => r.from && r.to).map(r => `${r.from} ${r.to} ${r.code || 301}`).join('\n');
   if (red) fs.writeFileSync(path.join(DIST, '_redirects'), red + '\n');
   return DIST;
 }
+
+
+// Cloudflare Pages Functions for "Sign in with Steam" (written next to dist/, deployed with it).
+function writeFunctions(site, root, preview) {
+  if (preview) return;
+  const fdir = path.join(root, 'functions');
+  fs.rmSync(fdir, { recursive: true, force: true });
+  if (!(site.header && site.header.steamLogin)) return;
+  const secFile = path.join(root, '.session-secret');
+  if (!fs.existsSync(secFile)) fs.writeFileSync(secFile, require('crypto').randomBytes(32).toString('hex'));
+  const SECRET = fs.readFileSync(secFile, 'utf8').trim();
+  for (const [f, code] of Object.entries(FUNCTIONS)) {
+    const p = path.join(fdir, f); fs.mkdirSync(path.dirname(p), { recursive: true });
+    fs.writeFileSync(p, code.replace('__SECRET__', SECRET));
+  }
+}
+const FN_LIB = `
+const SECRET = '__SECRET__';
+const enc = new TextEncoder();
+const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');
+async function hmac(data) { const k = await crypto.subtle.importKey('raw', enc.encode(SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']); return b64u(await crypto.subtle.sign('HMAC', k, enc.encode(data))); }
+export async function sign(obj) { const body = b64u(enc.encode(JSON.stringify(obj))); return body + '.' + await hmac(body); }
+export async function verify(tok) {
+  if (!tok || !tok.includes('.')) return null; const [body, sig] = tok.split('.');
+  if (sig !== await hmac(body)) return null;
+  try { const o = JSON.parse(decodeURIComponent(escape(atob(body.replace(/-/g, '+').replace(/_/g, '/'))))); return o.exp > Date.now() ? o : null; } catch { return null; }
+}
+export function cookie(req, name) { const m = (req.headers.get('Cookie') || '').match(new RegExp('(?:^|; )' + name + '=([^;]*)')); return m ? decodeURIComponent(m[1]) : null; }
+export const safeReturn = r => (r && r.startsWith('/') && !r.startsWith('//')) ? r : '/';
+`;
+const FUNCTIONS = {
+  '_lib/session.js': FN_LIB,
+  'auth/steam.js': `import { safeReturn } from '../_lib/session.js';
+export async function onRequestGet({ request }) {
+  const u = new URL(request.url), ret = safeReturn(u.searchParams.get('return'));
+  const p = new URLSearchParams({
+    'openid.ns': 'http://specs.openid.net/auth/2.0', 'openid.mode': 'checkid_setup',
+    'openid.return_to': u.origin + '/auth/steam/callback?return=' + encodeURIComponent(ret), 'openid.realm': u.origin,
+    'openid.identity': 'http://specs.openid.net/auth/2.0/identifier_select', 'openid.claimed_id': 'http://specs.openid.net/auth/2.0/identifier_select' });
+  return Response.redirect('https://steamcommunity.com/openid/login?' + p, 302);
+}`,
+  'auth/steam/callback.js': `import { sign, safeReturn } from '../../_lib/session.js';
+export async function onRequestGet({ request }) {
+  const u = new URL(request.url), q = u.searchParams, ret = safeReturn(q.get('return'));
+  const fail = () => Response.redirect(u.origin + ret + (ret.includes('?') ? '&' : '?') + 'login=failed', 302);
+  if (q.get('openid.mode') !== 'id_res') return fail();
+  if (!(q.get('openid.return_to') || '').startsWith(u.origin + '/auth/steam/callback')) return fail();
+  if (q.get('openid.op_endpoint') !== 'https://steamcommunity.com/openid/login') return fail();
+  const check = new URLSearchParams(); for (const [k, v] of q) if (k.startsWith('openid.')) check.set(k, v);
+  check.set('openid.mode', 'check_authentication');
+  const r = await fetch('https://steamcommunity.com/openid/login', { method: 'POST', body: check, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+  if (!/is_valid\\s*:\\s*true/.test(await r.text())) return fail();
+  const m = /^https:\\/\\/steamcommunity\\.com\\/openid\\/id\\/(\\d{17})$/.exec(q.get('openid.claimed_id') || ''); if (!m) return fail();
+  const id = m[1]; let name = 'Steam user', avatar = '';
+  try { const x = await (await fetch('https://steamcommunity.com/profiles/' + id + '/?xml=1')).text();
+    name = ((/<steamID><!\\[CDATA\\[(.*?)\\]\\]><\\/steamID>/.exec(x) || [])[1]) || name;
+    avatar = ((/<avatarMedium><!\\[CDATA\\[(.*?)\\]\\]><\\/avatarMedium>/.exec(x) || [])[1]) || ''; } catch {}
+  const tok = await sign({ id, name, avatar, exp: Date.now() + 30 * 864e5 });
+  return new Response(null, { status: 302, headers: { Location: u.origin + ret, 'Set-Cookie': 'kc_session=' + tok + '; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax' } });
+}`,
+  'api/me.js': `import { verify, cookie } from '../_lib/session.js';
+export async function onRequestGet({ request }) {
+  const s = await verify(cookie(request, 'kc_session'));
+  return new Response(JSON.stringify(s ? { id: s.id, name: s.name, avatar: s.avatar } : null), { status: s ? 200 : 401, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+}`,
+  'auth/logout.js': `export async function onRequestGet({ request }) {
+  return new Response(null, { status: 302, headers: { Location: new URL(request.url).origin + '/', 'Set-Cookie': 'kc_session=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax' } });
+}`,
+};
 
 module.exports = { build, pageFile, pageHref };

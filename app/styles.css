@@ -249,3 +249,20 @@ footer .fbottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16
 .card .shot.fit{object-fit:contain}
 .gallery[style*="--gr"] img{aspect-ratio:var(--gr)}
 .gallery[style*="--gr:auto"] img{aspect-ratio:auto}
+
+/* Sign in with Steam */
+.steam-login{display:inline-flex;align-items:center;gap:8px;margin-left:6px;padding:8px 14px;border-radius:10px;background:linear-gradient(135deg,#1b2838,#2a475e);color:#fff!important;font-weight:700;font-size:.9rem;border:1px solid rgba(255,255,255,.12);transition:transform .15s,box-shadow .15s}
+.steam-login:hover{text-decoration:none;transform:translateY(-1px);box-shadow:0 6px 20px rgba(102,192,244,.25);border-color:#66c0f4}
+html.btn-pill .steam-login{border-radius:999px}
+.steam-user .su{display:inline-flex;align-items:center;gap:8px;color:var(--text)!important;font-weight:600}
+.steam-user img{width:28px;height:28px;border-radius:6px}
+.steam-user .ddm{left:auto;right:0}
+@media(max-width:720px){.steam-login{margin:12px 20px}.steam-user .su{padding:14px 20px}}
+/* Per-app gradient cards */
+.gcard{position:relative;overflow:hidden}
+.gcard::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--g1),var(--g2))}
+.gcard .ico,.gcard .shot{background:linear-gradient(135deg,var(--g1),var(--g2))!important;border-color:transparent}
+.gcard .ico{color:#fff}
+.gcard:hover{border-color:color-mix(in srgb,var(--g1) 70%,transparent);box-shadow:0 18px 50px -18px var(--g1)}
+.gcard .tag{background:color-mix(in srgb,var(--g1) 18%,transparent);color:color-mix(in srgb,var(--g2) 75%,#fff)}
+.gcard h3{background:linear-gradient(90deg,var(--text) 55%,var(--g2));-webkit-background-clip:text;background-clip:text;color:transparent}

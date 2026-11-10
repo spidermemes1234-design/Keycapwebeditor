@@ -97,6 +97,7 @@ addEventListener('message', e => {
 });
 function navigateTest(href) {
   if (/^(https?:|mailto:|tel:)/.test(href)) { window.open(href); return; }
+  if (href.startsWith('/auth/')) { toast('Steam sign-in only works on the live site (after Publish)'); return; }
   const [p0, hash] = href.split('#');
   const pathOnly = (p0 || '/').replace(/\.html$/, '');
   const target = S.pages.find(p => (p.slug ? '/' + p.slug : '/') === (pathOnly || '/'));
@@ -443,6 +444,9 @@ function sitePanel(P) {
       field(S.header, { key: 'sticky', label: 'Stick to top when scrolling', type: 'toggle' }),
       field(S.header, { key: 'transparent', label: 'See-through over the first block', type: 'toggle' }),
       h('div', { class: 'row2' }, field(S.header, { key: 'ctaText', label: 'Menu button text (optional)' }), field(S.header, { key: 'ctaLink', label: 'Menu button link', type: 'link' })),
+      field(S.header, { key: 'steamLogin', label: 'Show "Sign in with Steam" button (top right)', type: 'toggle' }),
+      S.header.steamLogin ? field(S.header, { key: 'steamText', label: 'Steam button text', placeholder: 'Sign in with Steam' }) : null,
+      S.header.steamLogin ? h('p', { class: 'hint', textContent: 'Real Steam sign-in works on the live site after you publish. Signed-in visitors see their Steam name and avatar.' }) : null,
       listField(S, { key: 'nav', label: 'Menu links', item: 'label', addLabel: 'menu link', fields: [...LINK_FIELDS, { key: 'children', label: 'Dropdown links', type: 'list', item: 'label', fields: LINK_FIELDS, blank: { label: 'Link', link: '/' }, addLabel: 'dropdown link' }], blank: { label: 'Link', link: '/', children: [] } })),
     section('Announcement bar', false,
       field(S.announcement, { key: 'enabled', label: 'Show a bar at the very top', type: 'toggle' }),

@@ -82,6 +82,21 @@
   const hdr = document.querySelector('header.nav.clear');
   if (hdr) { const f = () => hdr.classList.toggle('solid', scrollY > 30); addEventListener('scroll', f, { passive: true }); f(); }
 
+  // Sign in with Steam: show the signed-in user instead of the button
+  const sb = document.querySelector('[data-steam]');
+  if (sb) {
+    sb.href = '/auth/steam?return=' + encodeURIComponent(location.pathname + location.search);
+    if (!preview) fetch('/api/me', { credentials: 'same-origin' }).then(r => r.ok ? r.json() : null).then(u => {
+      if (!u) return;
+      const w = document.createElement('div'); w.className = 'dd steam-user';
+      const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      w.innerHTML = `<a href="#" class="ddt su">${u.avatar ? `<img src="${esc(u.avatar)}" alt="">` : ''}<span>${esc(u.name)}</span> <span class="car">▾</span></a><div class="ddm"><a href="https://steamcommunity.com/profiles/${esc(u.id)}" target="_blank" rel="noopener">Steam profile</a><a href="/auth/logout">Sign out</a></div>`;
+      w.querySelector('.su').addEventListener('click', e => e.preventDefault());
+      sb.replaceWith(w); document.documentElement.classList.add('signed-in');
+      window.keycapUser = u; document.dispatchEvent(new CustomEvent('keycap:user', { detail: u }));
+    }).catch(() => {});
+  }
+
   // Cookie banner
   const ck = document.querySelector('.cookie');
   if (ck && !preview) {

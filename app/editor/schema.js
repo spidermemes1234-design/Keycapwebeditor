@@ -235,3 +235,9 @@ BLOCKS.imagetext.fields.splice(2, 0, { key: 'imageWidth', label: 'Image width (p
 BLOCKS.team.fields.splice(3, 0, { key: 'photoSize', label: 'Photo size (px, default 96)', type: 'number' });
 BLOCKS.gallery.fields.splice(1, 0, { key: 'imageRatio', label: 'Image shape', type: 'select', options: [['4/3', '4:3'], ['16/9', 'Wide 16:9'], ['1/1', 'Square'], ['3/4', 'Tall 3:4'], ['auto', 'Original shape']] });
 STYLE_FIELDS.splice(STYLE_FIELDS.findIndex(f => f.key === 'minHeight') + 1, 0, { key: 'scale', label: 'Scale whole block (%, 100 = normal)', type: 'number' });
+
+// ---- v3.2: per-card gradients ----
+(() => {
+  const items = BLOCKS.cards.fields.find(f => f.key === 'items');
+  items.fields.push({ key: 'gradFrom', label: 'Gradient colour 1 (optional)', type: 'color', clearable: true }, { key: 'gradTo', label: 'Gradient colour 2', type: 'color', clearable: true });
+})();

@@ -35,6 +35,7 @@ module.exports.start = function start(ctx) {
   app.get('/styles.css', (req, res) => res.sendFile(path.join(__dirname, 'styles.css')));
   app.get('/site.js', (req, res) => res.sendFile(path.join(__dirname, 'site.js')));
 
+  app.get('/api/me', (req, res) => res.status(401).json(null)); // Steam login is live-site only
   app.get('/api/version', (req, res) => res.json({ version, dataDir }));
 
   app.use('/preview', (req, res, next) => {
